@@ -1,3 +1,4 @@
+Question One:
 
 I ran vmstat 5. I opened Google Chrome, Sublime Text, Firefox and LibreOffice. When a new program is opened, the amount of free memory in the system slowly decreases while the size of the cache slowly increases. 
 
@@ -5,6 +6,9 @@ Question Two:
 
 The command ps -eo uid |less produced the most page faults. In a minor page fault, the page is already loaded into memory. However, the page table has not been updated yet. In a major page fault, the page needs to be loaded into memory after the fault. 
 
+Question Three: 
+
+If we do a similar simulation to question one but open multiple programs inside of a virtual machine this should cause the physical memory to drop. The VM will still think there is memory left, which should cause page faults. 
 	
 Question 1:
 	I ran vmstat 5 in the terminal, and opened several new programs, including chrome, Firefox, LibreOffice, and emacs. Then I opened several new browser tabs and files on libreOffice. The first thing I noticed about the output was that the procs queue was filling up and dequeueing as fast as it could allocate memory. When the queue was at it's largest, the number of interrupts and context switches per second, were at their respective maximums, indicating that there were many requests being serviced and swapped in and out, while the CPU gradually services each request Also for I/O, there seems to be thousands of more blocks being received from a block device, than blocks being sent to block devices. You can see as each application is opened, that the amount of free memory gradually decreases, and the cache size gradually grows.
