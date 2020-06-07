@@ -7,7 +7,8 @@
 #define SIZE (int)pow(2,10)
 
 int number_frames;
-int pageMask = 0x14;		//20 bits
+long pageMask = 0x3FF; //0xFFFFF;
+// 0x3FF;		//20 bits
 int offsetMask = 0xFFF;		//12 bits
 int pageFault = 0;
 int dirtyPageCount = 0;
@@ -125,10 +126,12 @@ int replaceFrame(char access_type, unsigned long int address){
 }
 void manageMem(unsigned long logical_address, char access_type){
 
-	unsigned int pd = logical_address >> 22;
-	unsigned int pt = (logical_address >> 12) & pageMask;
-	unsigned int offset = logical_address && offsetMask;
-
+	//page table is 20 bits, page offset is 12 bits
+	unsigned int pd = logical_address >> 22;				//22
+	unsigned int pt = (logical_address >> 12) & pageMask;	//10
+	unsigned int offset = logical_address & offsetMask;
+	//offset is fine
+	printf("%i\n", offset);
 	if(!((access_type == 'r')||(access_type == 'w'))){
 		printf("Invalid access type\n");
 		return;
@@ -193,5 +196,14 @@ int main(int argc, char ** argv){
 	init_phys_mem(number_frames);
 	init_pd();
 
+	char access_type;
+	unsigned long logical_address;
 
+	while(scanf("%c ", &access_type) != EOF){
+
+		scanf("%lu ", &logical_address);
+		globalAge++;
+
+		manageMem(logical_address, access_type);
+	}
 }
