@@ -4,8 +4,7 @@
 #include <limits.h>
 #include <string.h>
 
-#define SIZE (int)pow(2,10)
-
+#define SIZE (int)pow(2,12)
 int number_frames;
 long pageMask = 0x3FF; //0xFFFFF;
 // 0x3FF;		//20 bits
@@ -30,6 +29,7 @@ pmEntry * phys_mem;
 ptEntry ** page_dir;
 
 void init_pd(){
+
 	page_dir = (ptEntry **)malloc(SIZE*sizeof(ptEntry *)); //an array of ptEntry pointers
 	int i;
 	for(i=0; i<SIZE; i++){
@@ -108,8 +108,8 @@ int replaceFrame(char access_type, unsigned long int address){
 		}
 	}
 
-	unsigned int pd = phys_mem[victimFrame].value >> 22;
-	unsigned int pt = (phys_mem[victimFrame].value >> 12) & pageMask;
+	unsigned int pd = phys_mem[victimFrame].value >> 50;
+	unsigned int pt = (phys_mem[victimFrame].value >> 33) & pageMask;
 	page_dir[pd][pt].invalid = 1; //set victim page to invalid
 	phys_mem[victimFrame].age = globalAge; //update victim page's age
 	phys_mem[victimFrame].value = address;
@@ -127,11 +127,11 @@ int replaceFrame(char access_type, unsigned long int address){
 void manageMem(unsigned long logical_address, char access_type){
 
 	//page table is 20 bits, page offset is 12 bits
-	unsigned int pd = logical_address >> 22;				//22
-	unsigned int pt = (logical_address >> 12) & pageMask;	//10
+	unsigned int pd = logical_address >> 50;				//22
+	//printf("%i\n", sizeof(unsigned int));
+	unsigned int pt = (logical_address >> 33) & pageMask;	//10
 	unsigned int offset = logical_address & offsetMask;
 	//offset is fine
-	printf("%i\n", offset);
 	if(!((access_type == 'r')||(access_type == 'w'))){
 		printf("Invalid access type\n");
 		return;
@@ -143,13 +143,18 @@ void manageMem(unsigned long logical_address, char access_type){
 		return;
 	}
 	if(page_dir[pd] == NULL){
+
+
 		pageFault++;
 		page_dir[pd] = init_pt(SIZE);
 
+
+
 		int index = findFrame(logical_address, access_type);
 
+
 		if(index != -1){
-			page_dir[pd][pt].frame = index;
+			page_dir[pd][pt].frame = index;			
 			page_dir[pd][pt].invalid = 0;
 			phys_mem[index].age = globalAge;
 			printf("Logical address %lu -> physical address %u\n", logical_address, (index<<12)+offset);			
