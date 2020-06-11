@@ -19,14 +19,14 @@ RequestList *requestList;
 
 static unsigned int currentTime;
 char algorithm;
+bool movingForwards;
 char direction;
 static int currentHeadLocation;
 
 float totalLatency = 0;
 int requestsProcessed = 0;
-int directionChanges = 0;
 int distanceTravelled = 0;
-unsigned int distance = 0;
+int distance = 0;
 
 void initializeRequestList() {
     requestList = (RequestList*) malloc(sizeof(RequestList));
@@ -109,6 +109,25 @@ void dequeue(RequestNode* request) {
     requestList->size--;
     free(request);
 }
+bool directionChanged(RequestNode* nextRequest){
+
+	if(currentTime == 0){
+
+		movingForwards = nextRequest -> location >= currentHeadLocation;
+		return false;
+	}else if(algorithm == 'C'){
+		return false;
+	}else{
+		bool goingForward = nextRequest -> location >= currentHeadLocation;
+		bool directionChange = movingForwards != goingForward;
+
+		if(directionChange){
+			//increment variable here
+		}
+		movingForwards = goingForward;
+		return directionChange;
+	}
+}
 //time = distance/15 + (reverse_direction) ? 3 : 0;
 void handleInput(){
 
@@ -119,17 +138,21 @@ void handleInput(){
 
 		if(nextRequest -> arrivalTime > currentTime){
 
-			currentTime = nextRequest -> arrivalTime;
-		}
-		unsigned int ulocation = nextRequest -> location;
-		unsigned int uhead = currentHeadLocation;
-		distance = ulocation - uhead; //nextRequest -> location - currentHeadLocation;
+			distance = nextRequest -> location - currentHeadLocation;
 
-		printf("%u\n", distance);
+			//currentTime = nextRequest -> arrivalTime;
+			currentTime = distance / 15 + (directionChange) ? 3 : 0;
+		}
+
+		printf("%i\n", abs(distance));
 		requestsProcessed++;
 		currentHeadLocation = nextRequest -> location;
 		dequeue(nextRequest);
 	}
+}
+void output(){
+	printf("Total amount of head movements required: %d\n", distanceTravelled);
+
 }
 
 int main(int argc, const char * argv[]){
@@ -160,4 +183,5 @@ int main(int argc, const char * argv[]){
 	}
 	buildRequestList();
 	handleInput();
+	output();
 }
