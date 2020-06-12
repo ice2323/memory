@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <string.h>
 
 int totalMemory; 
@@ -41,43 +42,47 @@ void firstFit(int jsize, int app_id, node_t * ptr){
 	int isHead = 0;
 	int isTail = 0;
 
-	if(ptr==NULL)
+	if(ptr == NULL)
 		return;
 	
-	while(ptr != NULL){
+	for( ;ptr != NULL; ptr = ptr -> next){
 
-		if((ptr->val >= jsize) && (ptr->id == -1)){
+		if(ptr -> val >= jsize){
 
-			if(ptr->previous == NULL){ 
-				isHead = 1;
-			}
-			if(ptr->next == NULL){ 
-				isTail = 1;
-			}
-			node_t *newNode = malloc(sizeof(node_t));
-			if(isHead==1){
-				head = newNode;
-			}
-			newNode->currentAddress = ptr->currentAddress;
-			newNode->id = app_id;
-			newNode->val = jsize;
-			newNode->next = ptr;
-			newNode->previous = ptr->previous;
-			ptr->val -= jsize;
-			ptr->currentAddress += jsize;
+			if(ptr -> id == -1){
 
-			if(isHead==0){
-				ptr->previous->next = newNode;
-			}
+				if(ptr -> previous == NULL || ptr -> next == NULL){
 
-			ptr->previous = newNode;
-			freeMemory -= jsize;
-			allocatedMem += jsize;
-			procCreatedCount++;
-			printf("%s %d %s %d %s %d\n", "Process", app_id, "of size", jsize, "created successfully at address", newNode -> currentAddress);
-			return;
+					if(ptr -> previous == NULL)
+						isHead = 1;
+					if(ptr -> next == NULL)
+						isTail = 1;
+				}
+				node_t *newNode = malloc(sizeof(node_t));
+
+				if(isHead==1){
+					head = newNode;
+				}
+				newNode->currentAddress = ptr->currentAddress;
+				newNode->id = app_id;
+				newNode->val = jsize;
+				newNode->next = ptr;
+				newNode->previous = ptr->previous;
+				ptr->val -= jsize;
+				ptr->currentAddress += jsize;
+
+				if(isHead==0){
+					ptr->previous->next = newNode;
+				}
+
+				ptr->previous = newNode;
+				freeMemory = freeMemory - jsize;
+				allocatedMem = allocatedMem + jsize;
+				procCreatedCount++;
+				printf("%s %d %s %d %s %d\n", "Process", app_id, "of size", jsize, "created successfully at address", newNode -> currentAddress);
+				return;
+			}
 		}
-		ptr = ptr -> next;
 	}
 	printf("%s %d %s %d %s\n", "Process", app_id, "failed to allocate", jsize, "bytes");
 }
@@ -88,24 +93,26 @@ void bestFit(int app_size, int app_id, node_t * ptr){
 		return;
 	}
 	node_t * smallest = NULL;
-	while(ptr != NULL){
+
+	for( ;ptr != NULL; ptr = ptr -> next){
+
 		if((ptr->id == -1)&&(ptr->val >= app_size)){ 
 			smallest = ptr;
 			break;
 		}
-		ptr=ptr->next;
 	}
 	if (smallest==NULL){ 
 		printf("%s %d %s %d %s\n", "Process", app_id, "failed to allocate", app_size, "bytes");
 		return;
 	}
 	int isHead = 0, isTail = 0;
-	while(ptr != NULL){
+
+	for( ;ptr != NULL; ptr = ptr -> next){
 		if((ptr->val >= app_size)&&(ptr->val < smallest->val)&&(ptr->id == -1)){
 			smallest = ptr;
 		}
-		ptr=ptr->next;
 	}
+
 	if(smallest->previous == NULL){ 
 		isHead = 1;
 	}
@@ -120,13 +127,17 @@ void bestFit(int app_size, int app_id, node_t * ptr){
 	newNode->previous = smallest->previous;
 	smallest->val -= app_size;
 	smallest->currentAddress += app_size;
+
 	if(isHead==0){
 		smallest->previous->next = newNode;
 	}
+
 	smallest->previous = newNode;
+	
 	if(isHead==1){
 		head = newNode;
 	}
+
 	freeMemory -= app_size;
 	allocatedMem += app_size;
 	procCreatedCount++;
@@ -147,30 +158,35 @@ void worstFit(int app_size, int app_id, node_t * ptr){
 		return;
 	}
 	node_t * largest = NULL;
-	while(ptr != NULL){
+
+	for( ;ptr != NULL; ptr = ptr -> next){
+
 		if((ptr->id == -1)&&(ptr->val >= app_size)){ 
 			largest = ptr;
 			break;
 		}
-		ptr=ptr->next;
 	}
-	if (largest==NULL){
+	if (largest == NULL){
 		printf("%s %d %s %d %s\n", "Process", app_id, "failed to allocate", app_size, "bytes of memory");
 		return;
 	}
 	int isHead = 0, isTail = 0;
-	while(ptr != NULL){
+
+	for( ;ptr != NULL; ptr = ptr -> next){
+
 		if((ptr->val >= app_size)&&(ptr->val > largest->val)&&(ptr->id == -1)){ 
+
 			largest = ptr;
 		}
-		ptr=ptr->next;
 	}
-	if(largest->previous == NULL){ 
-		isHead = 1;
+	if(largest -> previous == NULL || largest -> next == NULL){
+
+		if(largest -> previous == NULL)
+			isHead = 1;
+		if(largest -> next == NULL)
+			isTail = 1;
 	}
-	if(largest->next == NULL){
-		isTail = 1;
-	}
+
 	node_t *newNode = malloc(sizeof(node_t));
 	newNode->currentAddress = largest->currentAddress;
 	newNode->id = app_id;
@@ -179,9 +195,11 @@ void worstFit(int app_size, int app_id, node_t * ptr){
 	newNode->previous = largest->previous;
 	largest->val -= app_size;
 	largest->currentAddress += app_size;
+
 	if(isHead==0){
 		largest->previous->next = newNode;
 	}
+
 	largest->previous = newNode;
 	if(isHead==1){
 		head = newNode;
@@ -200,7 +218,7 @@ void worstFit(int app_size, int app_id, node_t * ptr){
 	return;
 }
 
-void mergeFree(node_t * node){
+void move(node_t * node){
 	node_t * temp = NULL;
 	if((node->next != NULL)&&(node->previous != NULL)){ 
 		if((node->next->id == -1)&&(node->id == -1)){ 
@@ -243,12 +261,16 @@ void mergeFree(node_t * node){
 	}
 
 }
+
 node_t * largestFragment = NULL;
 node_t * smallestFragment = NULL;
 
+/**
+method to terminate a process and free the allocated memory
+*/
 void terminate(int pid, node_t * ptr){
 
-	while(ptr != NULL){
+	for(; ptr != NULL; ptr = ptr -> next){
 
 		if(ptr -> id == pid){
 
@@ -257,11 +279,10 @@ void terminate(int pid, node_t * ptr){
 			freedMem = freedMem + ptr -> val;
 			procTerminatedCount++;
 			printf("%s %d %s\n", "Process", pid, "terminated successfully");
-			mergeFree(ptr);
-			mergeFree(ptr);
+			move(ptr);
+			move(ptr);
 			return;
 		}
-		ptr = ptr -> next;
 	}
 	printf("%s %d %s\n", "Process", pid, "failed to free memory");
 }
@@ -318,8 +339,9 @@ int main(int argc, const char * argv[]){
 	}
 	head = initiate_list(totalMemory); 
 	char input;
-	int stop = 0;
-	while(stop == 0){
+	//int stop = 0;
+	bool stop = false;
+	while(!stop){
 
 		scanf("%c ", &input);
 		int id, size;
@@ -340,7 +362,7 @@ int main(int argc, const char * argv[]){
 						terminate(id, head);
 						break;
 					case 'S':
-						stop = 1;
+						stop = true;;
 				}
 				break;
 			case 1:		//best fit
@@ -357,7 +379,7 @@ int main(int argc, const char * argv[]){
 						terminate(id, head);
 						break;
 					case 'S':
-						stop = 1;
+						stop = true;
 				}
 				break;
 			case 2: 		//worst fit
@@ -374,7 +396,7 @@ int main(int argc, const char * argv[]){
 						terminate(id, head);
 						break;
 					case 'S':
-						stop = 1;
+						stop = true;
 				}
 				break;
 		}
