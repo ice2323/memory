@@ -131,20 +131,29 @@ bool directionChanged(RequestNode* nextRequest){
 //time = distance/15 + (reverse_direction) ? 3 : 0;
 void handleInput(){
 
+	int timeToComplete = 0;
+
 	while(requestList -> size > 0){
 
 		RequestNode* nextRequest = getNextRequest();
-		bool directionChange;
+		
+		bool directionChange = directionChanged(nextRequest);
 
 		if(nextRequest -> arrivalTime > currentTime){
 
 			distance = nextRequest -> location - currentHeadLocation;
-
+			//printf("%d\n", distance);
 			//currentTime = nextRequest -> arrivalTime;
-			currentTime = distance / 15 + (directionChange) ? 3 : 0;
+			timeToComplete = distance / 15;// (directionChange) ? 3 : 0;
+
+
+
+			printf("%i\n", abs(timeToComplete));
+		}else{
+			currentTime++;
 		}
 
-		printf("%i\n", abs(distance));
+		//printf("%i\n", abs(distance));
 		requestsProcessed++;
 		currentHeadLocation = nextRequest -> location;
 		dequeue(nextRequest);
