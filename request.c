@@ -19,11 +19,12 @@ RequestList *requestList;
 
 static unsigned int currentTime;
 char algorithm;
-bool movingForwards;
+bool movingForwards;			//false (0)
 char direction;
 static int currentHeadLocation;
 
 float totalLatency = 0;
+int directionChanges = 0;
 int requestsProcessed = 0;
 int distanceTravelled = 0;
 int distance = 0;
@@ -109,6 +110,7 @@ void dequeue(RequestNode* request) {
     requestList->size--;
     free(request);
 }
+//returns true if direction changes, false otherwise 
 bool directionChanged(RequestNode* nextRequest){
 
 	if(currentTime == 0){
@@ -122,7 +124,7 @@ bool directionChanged(RequestNode* nextRequest){
 		bool directionChange = movingForwards != goingForward;
 
 		if(directionChange){
-			//increment variable here
+			directionChanges++;
 		}
 		movingForwards = goingForward;
 		return directionChange;
@@ -137,22 +139,23 @@ void handleInput(){
 
 		RequestNode* nextRequest = getNextRequest();
 		
+		//check if we need to change the direction
 		bool directionChange = directionChanged(nextRequest);
+		distance = nextRequest -> location - currentHeadLocation;
+
 
 		if(nextRequest -> arrivalTime > currentTime){
 
-			distance = nextRequest -> location - currentHeadLocation;
-			//printf("%d\n", distance);
-			//currentTime = nextRequest -> arrivalTime;
-			timeToComplete = distance / 15;// (directionChange) ? 3 : 0;
+			currentTime = nextRequest -> arrivalTime;
 
-
-
-			printf("%i\n", abs(timeToComplete));
-		}else{
-			currentTime++;
 		}
+		currentTime = abs(distance / 15);
 
+		if(directionChange){
+			currentTime = currentTime + 3;
+			//rintf("%i\n", abs(timeToComplete))
+		}
+		printf("%d\n", abs(currentTime));
 		//printf("%i\n", abs(distance));
 		requestsProcessed++;
 		currentHeadLocation = nextRequest -> location;
@@ -161,6 +164,7 @@ void handleInput(){
 }
 void output(){
 	printf("Total amount of head movements required: %d\n", distanceTravelled);
+	printf("%s %d\n", "Total jobs processed:", requestsProcessed);
 
 }
 
