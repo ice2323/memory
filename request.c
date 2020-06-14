@@ -76,15 +76,7 @@ void buildRequestList(){
 		scanf("\n");
 	}
 }
-RequestNode* getNextRequest(){
 
-	if(algorithm == 'F')
-		return requestList -> front;
-	else if(algorithm == 'T')
-		return requestList -> front;
-	else
-		return requestList -> front;
-}
 
 void dequeue(RequestNode* request) {
     if (requestList->size == 1) {
@@ -110,6 +102,73 @@ void dequeue(RequestNode* request) {
     requestList->size--;
     free(request);
 }
+
+int distanceFromHead(RequestNode* request){
+	int distanceFromHead = request -> location - currentHeadLocation;
+	return distanceFromHead < 0 ? distanceFromHead * - 1 : distanceFromHead;
+}
+
+RequestNode* findFirstSSTF(){
+
+	RequestNode* first = requestList -> front;
+	RequestNode* pointer = requestList -> front;
+
+	while(pointer != NULL && pointer -> arrivalTime == first -> arrivalTime){
+
+		if(distanceFromHead(pointer) < distanceFromHead(first)){
+
+			first = pointer;
+		}
+		pointer = pointer -> next;
+	}
+	return first;
+}
+RequestNode * findNextSSTF(){
+
+	if(currentTime == 0){
+		return findFirstSSTF();
+	}else{
+		RequestNode* next = requestList -> front;
+		RequestNode* pointer = requestList -> front;
+
+		while(pointer != NULL && pointer -> arrivalTime <= currentTime){
+
+			if(distanceFromHead(pointer) < distanceFromHead(next)){
+				next = pointer;
+			}
+			pointer = pointer -> next;
+		}
+		return next;
+	}
+}
+RequestNode * findNextCSCAN(){
+
+	if(currentTime == 0){
+
+		RequestNode * first = findFirstSSTF();
+		movingForwards = first -> location >= currentHeadLocation;
+		return first;
+	}else{
+		RequestNode* next = requestList -> front;
+		RequestNode * pointer = requestList -> front;
+
+		while(pointer != NULL && pointer -> arrivalTime <= currentTime){
+
+
+		}
+	}
+}
+RequestNode* getNextRequest(){
+
+	if(algorithm == 'F'){
+		return requestList -> front;
+	}else if(algorithm == 'T'){
+		return findNextSSTF();
+	} else{
+		return requestList -> front;
+	}
+
+}
 //returns true if direction changes, false otherwise 
 bool directionChanged(RequestNode* nextRequest){
 
@@ -130,33 +189,76 @@ bool directionChanged(RequestNode* nextRequest){
 		return directionChange;
 	}
 }
-//time = distance/15 + (reverse_direction) ? 3 : 0;
-void handleInput(){
+void handleInputDescending(){
 
 	int timeToComplete = 0;
 
 	while(requestList -> size > 0){
 
+
+	}
+}
+bool directionAtStart(RequestNode* nextRequest){
+
+	if(direction == 'A' && nextRequest -> location > currentHeadLocation){
+
+		return true;
+	}else if(direction == 'D' && nextRequest -> location < currentHeadLocation){
+		return true;
+	}
+	return false;
+}
+//time = distance/15 + (reverse_direction) ? 3 : 0;
+void handleInput(){
+
+	int timeToComplete = 0;
+
+	bool isStart = true;
+	bool startCheck = false;
+	bool changeAtStart;
+	bool directionChange;
+
+	RequestNode* start = getNextRequest();
+
+	
+	if(isStart){
+		isStart = false;
+
+		changeAtStart = directionAtStart(start);
+		printf(changeAtStart ? "true\n" : "false\n");
+
+		if(changeAtStart){
+			directionChanges++;
+		}
+	}
+	while(requestList -> size > 0){
+
 		RequestNode* nextRequest = getNextRequest();
 		
 		//check if we need to change the direction
-		bool directionChange = directionChanged(nextRequest);
-		distance = nextRequest -> location - currentHeadLocation;
 
+		if(!startCheck){
+			printf("%s\n", "in here");
+			startCheck = true;
+		}else{
+			directionChange = directionChanged(nextRequest);
+		}
+		//	printf(directionChange ? "true\n" : "false\n");
+		distance = nextRequest -> location - currentHeadLocation;
+		distanceTravelled += abs(distance);
 
 		if(nextRequest -> arrivalTime > currentTime){
 
 			currentTime = nextRequest -> arrivalTime;
-
 		}
+
 		currentTime = abs(distance / 15);
 
 		if(directionChange){
 			currentTime = currentTime + 3;
-			//rintf("%i\n", abs(timeToComplete))
 		}
-		printf("%d\n", abs(currentTime));
-		//printf("%i\n", abs(distance));
+		//printf("%d\n", abs(currentTime));
+		
 		requestsProcessed++;
 		currentHeadLocation = nextRequest -> location;
 		dequeue(nextRequest);
@@ -165,7 +267,6 @@ void handleInput(){
 void output(){
 	printf("Total amount of head movements required: %d\n", distanceTravelled);
 	printf("%s %d\n", "Total jobs processed:", requestsProcessed);
-
 }
 
 int main(int argc, const char * argv[]){
