@@ -205,8 +205,33 @@ bool directionAtStart(RequestNode* nextRequest){
 		return true;
 	}else if(direction == 'D' && nextRequest -> location < currentHeadLocation){
 		return true;
+	}else if(direction == 'D' && nextRequest -> location > currentHeadLocation){
+		return false;
+	}else if(direction == 'A' && nextRequest -> location < currentHeadLocation){
+		return false;
 	}
-	return false;
+}
+bool changeDirectionForwards(RequestNode* nextRequest){
+
+	printf("%d %d\n", currentHeadLocation, nextRequest -> location);
+	if(nextRequest -> location > currentHeadLocation){
+		return false;
+	}else{
+		directionChanges++;
+
+		return true;
+	}
+}
+bool changeDirectionBackwards(RequestNode* nextRequest){
+
+	printf("%d %d\n", currentHeadLocation, nextRequest -> location);
+	if(nextRequest -> location < currentHeadLocation){
+		return false;
+	}else{
+		directionChanges++;
+
+		return true;
+	}
 }
 //time = distance/15 + (reverse_direction) ? 3 : 0;
 void handleInput(){
@@ -221,52 +246,68 @@ void handleInput(){
 	RequestNode* start = getNextRequest();
 
 	
-	if(isStart){
-		isStart = false;
-
-		changeAtStart = directionAtStart(start);
-		printf(changeAtStart ? "true\n" : "false\n");
-
-		if(changeAtStart){
-			directionChanges++;
-		}
-	}
 	while(requestList -> size > 0){
 
 		RequestNode* nextRequest = getNextRequest();
 		
 		//check if we need to change the direction
 
-		if(!startCheck){
-			printf("%s\n", "in here");
-			startCheck = true;
-		}else{
+		if(algorithm == 'F'){
+			
+
+			if(!startCheck){
+				printf("%s\n", "ef");
+				startCheck = true;
+				if(direction == 'A'){
+					changeDirectionForwards(nextRequest);
+				}
+				if(direction == 'D'){
+					changeDirectionBackwards(nextRequest);
+				}
+			}
 			directionChange = directionChanged(nextRequest);
-		}
-		//	printf(directionChange ? "true\n" : "false\n");
-		distance = nextRequest -> location - currentHeadLocation;
-		distanceTravelled += abs(distance);
-
-		if(nextRequest -> arrivalTime > currentTime){
-
-			currentTime = nextRequest -> arrivalTime;
-		}
-
-		currentTime = abs(distance / 15);
-
-		if(directionChange){
-			currentTime = currentTime + 3;
-		}
-		//printf("%d\n", abs(currentTime));
 		
-		requestsProcessed++;
-		currentHeadLocation = nextRequest -> location;
-		dequeue(nextRequest);
+			//	printf(directionChange ? "true\n" : "false\n");
+			distance = nextRequest -> location - currentHeadLocation;
+			distanceTravelled += abs(distance);
+			if(nextRequest -> arrivalTime > currentTime){
+
+				currentTime = nextRequest -> arrivalTime;
+			}
+
+			currentTime = abs(distance / 15);
+
+			if(directionChange){
+				currentTime = currentTime + 3;
+			}
+			//printf("%d\n", abs(currentTime));
+			
+			requestsProcessed++;
+			currentHeadLocation = nextRequest -> location;
+			dequeue(nextRequest);
+		}else if(algorithm == 'T'){
+
+			//bool directionChange = getNextRequest();
+
+			if(nextRequest -> arrivalTime > currentTime){
+				currentTime = nextRequest -> arrivalTime;
+			}
+			distance = distanceFromHead(nextRequest);
+			distanceTravelled += abs(distance);
+			printf("%s %d\n", "Currently processing:",  nextRequest -> location);
+
+			currentTime = currentTime + 15;
+			requestsProcessed++;
+			currentHeadLocation = nextRequest -> location;
+			dequeue(nextRequest);
+
+		}
 	}
 }
 void output(){
 	printf("Total amount of head movements required: %d\n", distanceTravelled);
 	printf("%s %d\n", "Total jobs processed:", requestsProcessed);
+	printf("%s %d\n", "Total direction changes:", directionChanges);
 }
 
 int main(int argc, const char * argv[]){
