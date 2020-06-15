@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <stdbool.h>
+#include <limits.h>
 
 typedef struct RequestNode{
 	int location;
@@ -105,7 +107,7 @@ void dequeue(RequestNode* request) {
 
 int distanceFromHead(RequestNode* request){
 	int distanceFromHead = request -> location - currentHeadLocation;
-	return distanceFromHead < 0 ? distanceFromHead * - 1 : distanceFromHead;
+	return distanceFromHead < 0 ? distanceFromHead * -1 : distanceFromHead;
 }
 
 RequestNode* findFirstSSTF(){
@@ -141,6 +143,22 @@ RequestNode * findNextSSTF(){
 		return next;
 	}
 }
+int distanceFromHeadCSCAN(RequestNode* request){
+
+	int distanceAway;
+
+	if(movingForwards && request -> location < currentHeadLocation){
+
+		distanceAway = ((99999 - currentHeadLocation) + 1) + request -> location;
+	}else if(!movingForwards && request -> location > currentHeadLocation){
+
+		distanceAway = (currentHeadLocation) + 1 + (99999 - request -> location);
+	}else{
+
+		distanceAway = distanceFromHead(request);
+	}
+	return distanceAway;
+}
 RequestNode * findNextCSCAN(){
 
 	if(currentTime == 0){
@@ -154,8 +172,13 @@ RequestNode * findNextCSCAN(){
 
 		while(pointer != NULL && pointer -> arrivalTime <= currentTime){
 
+			if(distanceFromHeadCSCAN(pointer) < distanceFromHeadCSCAN(next)){
 
+				next = pointer;
+			}
+			pointer = pointer -> next;
 		}
+		return next;
 	}
 }
 RequestNode* getNextRequest(){
@@ -164,8 +187,8 @@ RequestNode* getNextRequest(){
 		return requestList -> front;
 	}else if(algorithm == 'T'){
 		return findNextSSTF();
-	} else{
-		return requestList -> front;
+	}else{
+		return findNextCSCAN();
 	}
 
 }
@@ -189,31 +212,9 @@ bool directionChanged(RequestNode* nextRequest){
 		return directionChange;
 	}
 }
-void handleInputDescending(){
 
-	int timeToComplete = 0;
-
-	while(requestList -> size > 0){
-
-
-	}
-}
-bool directionAtStart(RequestNode* nextRequest){
-
-	if(direction == 'A' && nextRequest -> location > currentHeadLocation){
-
-		return true;
-	}else if(direction == 'D' && nextRequest -> location < currentHeadLocation){
-		return true;
-	}else if(direction == 'D' && nextRequest -> location > currentHeadLocation){
-		return false;
-	}else if(direction == 'A' && nextRequest -> location < currentHeadLocation){
-		return false;
-	}
-}
 bool changeDirectionForwards(RequestNode* nextRequest){
 
-	printf("%d %d\n", currentHeadLocation, nextRequest -> location);
 	if(nextRequest -> location > currentHeadLocation){
 		return false;
 	}else{
@@ -224,7 +225,6 @@ bool changeDirectionForwards(RequestNode* nextRequest){
 }
 bool changeDirectionBackwards(RequestNode* nextRequest){
 
-	printf("%d %d\n", currentHeadLocation, nextRequest -> location);
 	if(nextRequest -> location < currentHeadLocation){
 		return false;
 	}else{
@@ -243,7 +243,7 @@ void handleInput(){
 	bool changeAtStart;
 	bool directionChange;
 
-	RequestNode* start = getNextRequest();
+	//RequestNode* start = getNextRequest();
 
 	
 	while(requestList -> size > 0){
@@ -256,7 +256,7 @@ void handleInput(){
 			
 
 			if(!startCheck){
-				printf("%s\n", "ef");
+
 				startCheck = true;
 				if(direction == 'A'){
 					changeDirectionForwards(nextRequest);
@@ -287,20 +287,43 @@ void handleInput(){
 			dequeue(nextRequest);
 		}else if(algorithm == 'T'){
 
-			//bool directionChange = getNextRequest();
+			bool directionChange = directionChanged(nextRequest);
 
 			if(nextRequest -> arrivalTime > currentTime){
 				currentTime = nextRequest -> arrivalTime;
 			}
 			distance = distanceFromHead(nextRequest);
-			distanceTravelled += abs(distance);
+			distanceTravelled += distance;
+			printf("%s %d\n", "distance:", distanceTravelled);
 			printf("%s %d\n", "Currently processing:",  nextRequest -> location);
 
 			currentTime = currentTime + 15;
 			requestsProcessed++;
 			currentHeadLocation = nextRequest -> location;
 			dequeue(nextRequest);
+		}else if(algorithm == 'C'){
 
+			int currentMinDistance = INT_MAX;
+
+			RequestNode* node = requestList -> front;
+
+			if(direction == 'A'){
+				fflush(stdout);
+				fflush(stdin);
+				printf("%d\n", node -> location);
+				fflush(stdout);
+				fflush(stdin);
+
+				while(node -> next != NULL){
+
+					if(abs(node -> location - node -> next -> location) < currentMinDistance){
+
+						currentMinDistance = node -> location;
+					}
+					node = node -> next;
+				}
+			}
+			dequeue(node);
 		}
 	}
 }
