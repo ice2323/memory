@@ -23,6 +23,8 @@ static unsigned int currentTime;
 char algorithm;
 bool movingForwards;			//false (0)
 char direction;
+			int start = 0;
+
 static int currentHeadLocation;
 
 float totalLatency = 0;
@@ -233,6 +235,18 @@ bool changeDirectionBackwards(RequestNode* nextRequest){
 		return true;
 	}
 }
+void handleInputCSCAN(){
+
+	int currentMin = INT_MAX;
+
+	while(requestList -> size > 0){
+
+
+		
+		//currentHeadLocation = nextRequest -> location;
+	}
+
+}
 //time = distance/15 + (reverse_direction) ? 3 : 0;
 void handleInput(){
 
@@ -284,6 +298,7 @@ void handleInput(){
 			
 			requestsProcessed++;
 			currentHeadLocation = nextRequest -> location;
+			printf("%d\n", currentHeadLocation);
 			dequeue(nextRequest);
 		}else if(algorithm == 'T'){
 
@@ -303,27 +318,48 @@ void handleInput(){
 			dequeue(nextRequest);
 		}else if(algorithm == 'C'){
 
+			RequestNode* nextNode;
+			int j = 0;
+
+			if(j == 0){
+				nextNode = requestList -> front;
+				j++;
+			}
+
+			int headHolder = currentHeadLocation;
+			printf("%d\n", headHolder);
+
 			int currentMinDistance = INT_MAX;
 
 			RequestNode* node = requestList -> front;
+			
 
 			if(direction == 'A'){
-				fflush(stdout);
-				fflush(stdin);
-				printf("%d\n", node -> location);
-				fflush(stdout);
-				fflush(stdin);
 
-				while(node -> next != NULL){
+				currentHeadLocation = nextRequest -> location;
+				//printf("%d\n", currentHeadLocation);
 
-					if(abs(node -> location - node -> next -> location) < currentMinDistance){
+				while(node != NULL){
+
+					if(start == 0){
+
+						start++;
+
+						currentMinDistance = node -> location - headHolder;
+						break;
+					}
+
+					if(node -> location < currentMinDistance){
 
 						currentMinDistance = node -> location;
+
+						//http://nitcselabprograms.blogspot.com/p/blog-page_44.html
 					}
+					//printf("%d\n",node -> location );
 					node = node -> next;
 				}
+				dequeue(nextRequest);
 			}
-			dequeue(node);
 		}
 	}
 }
