@@ -23,7 +23,7 @@ static unsigned int currentTime;
 char algorithm;
 bool movingForwards;			//false (0)
 char direction;
-			int start = 0;
+int start = 0;
 
 static int currentHeadLocation;
 
@@ -112,6 +112,8 @@ int distanceFromHead(RequestNode* request){
 	return distanceFromHead < 0 ? distanceFromHead * -1 : distanceFromHead;
 }
 
+
+
 RequestNode* findFirstSSTF(){
 
 	RequestNode* first = requestList -> front;
@@ -120,6 +122,22 @@ RequestNode* findFirstSSTF(){
 	while(pointer != NULL && pointer -> arrivalTime == first -> arrivalTime){
 
 		if(distanceFromHead(pointer) < distanceFromHead(first)){
+
+			first = pointer;
+		}
+		pointer = pointer -> next;
+	}
+	return first;
+}
+
+RequestNode* findFirstSSTFNegative(){
+
+	RequestNode* first = requestList -> front;
+	RequestNode* pointer = requestList -> front;
+
+	while(pointer != NULL && pointer -> arrivalTime == first -> arrivalTime){
+
+		if(distanceFromHead(pointer) > distanceFromHead(first)){
 
 			first = pointer;
 		}
@@ -149,10 +167,10 @@ int distanceFromHeadCSCAN(RequestNode* request){
 
 	int distanceAway;
 
-	if(movingForwards && request -> location < currentHeadLocation){
+	if(movingForwards && request -> location < currentHeadLocation){		// <<<<<<<<
 
 		distanceAway = ((99999 - currentHeadLocation) + 1) + request -> location;
-	}else if(!movingForwards && request -> location > currentHeadLocation){
+	}else if(!movingForwards && request -> location  > currentHeadLocation){	// >>>>>>>>>
 
 		distanceAway = (currentHeadLocation) + 1 + (99999 - request -> location);
 	}else{
@@ -160,6 +178,23 @@ int distanceFromHeadCSCAN(RequestNode* request){
 		distanceAway = distanceFromHead(request);
 	}
 	return distanceAway;
+}
+//function calculates and returns the amount of time it takes the current request
+//to complete based on if the direction changes.
+float calculateTimeToComplete(RequestNode* request, bool reverseDirection) {
+    int distance;
+    if (algorithm == 'C') {
+        distance = distanceFromHeadCSCAN(request);
+    } else {
+        distance = distanceFromHead(request);
+    }
+
+    distanceTravelled += distance;
+    float timeToComplete = (float) distance / (float) 15;
+    timeToComplete = reverseDirection ? timeToComplete + 3 : timeToComplete;
+    float waitTime = currentTime - request->arrivalTime;
+    totalLatency += timeToComplete + waitTime;
+    return timeToComplete;
 }
 RequestNode * findNextCSCAN(){
 
@@ -183,6 +218,28 @@ RequestNode * findNextCSCAN(){
 		return next;
 	}
 }
+RequestNode * findNextcscanNegative(){
+
+	if(currentTime == 0){
+
+		RequestNode * first = findFirstSSTFNegative();
+		movingForwards = first -> location >= currentHeadLocation;
+		return first;
+	}else{
+		RequestNode* next = requestList -> front;
+		RequestNode * pointer = requestList -> front;
+
+		while(pointer != NULL && pointer -> arrivalTime <= currentTime){
+
+			if(distanceFromHeadCSCAN(pointer) >= distanceFromHeadCSCAN(next)){
+
+				next = pointer;
+			}
+			pointer = pointer -> next;
+		}
+		return next;
+	}
+}
 RequestNode* getNextRequest(){
 
 	if(algorithm == 'F'){
@@ -190,7 +247,12 @@ RequestNode* getNextRequest(){
 	}else if(algorithm == 'T'){
 		return findNextSSTF();
 	}else{
-		return findNextCSCAN();
+		if(direction == 'A'){
+			return findNextCSCAN();
+
+		}else{
+			return findNextcscanNegative();
+		}
 	}
 
 }
@@ -202,6 +264,7 @@ bool directionChanged(RequestNode* nextRequest){
 		movingForwards = nextRequest -> location >= currentHeadLocation;
 		return false;
 	}else if(algorithm == 'C'){
+		//no direction changes for cscan
 		return false;
 	}else{
 		bool goingForward = nextRequest -> location >= currentHeadLocation;
@@ -281,7 +344,6 @@ void handleInput(){
 			}
 			directionChange = directionChanged(nextRequest);
 		
-			//	printf(directionChange ? "true\n" : "false\n");
 			distance = nextRequest -> location - currentHeadLocation;
 			distanceTravelled += abs(distance);
 			if(nextRequest -> arrivalTime > currentTime){
@@ -307,59 +369,41 @@ void handleInput(){
 			if(nextRequest -> arrivalTime > currentTime){
 				currentTime = nextRequest -> arrivalTime;
 			}
-			distance = distanceFromHead(nextRequest);
-			distanceTravelled += distance;
-			printf("%s %d\n", "distance:", distanceTravelled);
-			printf("%s %d\n", "Currently processing:",  nextRequest -> location);
-
-			currentTime = currentTime + 15;
+			currentTime += calculateTimeToComplete(nextRequest, directionChange);
 			requestsProcessed++;
 			currentHeadLocation = nextRequest -> location;
 			dequeue(nextRequest);
+			
 		}else if(algorithm == 'C'){
 
-			RequestNode* nextNode;
-			int j = 0;
-
-			if(j == 0){
-				nextNode = requestList -> front;
-				j++;
-			}
-
-			int headHolder = currentHeadLocation;
-			printf("%d\n", headHolder);
-
-			int currentMinDistance = INT_MAX;
-
-			RequestNode* node = requestList -> front;
-			
-
 			if(direction == 'A'){
+				bool directionChange = directionChanged(nextRequest);
 
-				currentHeadLocation = nextRequest -> location;
-				//printf("%d\n", currentHeadLocation);
-
-				while(node != NULL){
-
-					if(start == 0){
-
-						start++;
-
-						currentMinDistance = node -> location - headHolder;
-						break;
-					}
-
-					if(node -> location < currentMinDistance){
-
-						currentMinDistance = node -> location;
-
-						//http://nitcselabprograms.blogspot.com/p/blog-page_44.html
-					}
-					//printf("%d\n",node -> location );
-					node = node -> next;
+				if(nextRequest -> arrivalTime > currentTime){
+					currentTime = nextRequest -> arrivalTime;
 				}
+				printf("%s %d\n", "Currently processing:",  nextRequest -> location);
+
+				currentTime += calculateTimeToComplete(nextRequest, directionChange);
+				requestsProcessed++;
+				currentHeadLocation = nextRequest -> location;
 				dequeue(nextRequest);
-			}
+			}else{
+				//cscan going downwards
+
+				bool directionChange = directionChanged(nextRequest);
+
+				if(nextRequest -> arrivalTime > currentTime){
+					currentTime = nextRequest -> arrivalTime;
+				}
+				printf("%s %d\n", "Currently processing:",  nextRequest -> location);
+
+				currentTime += calculateTimeToComplete(nextRequest, directionChange);
+				requestsProcessed++;
+				currentHeadLocation = nextRequest -> arrivalTime;
+				dequeue(nextRequest);
+
+			}		
 		}
 	}
 }
@@ -367,6 +411,7 @@ void output(){
 	printf("Total amount of head movements required: %d\n", distanceTravelled);
 	printf("%s %d\n", "Total jobs processed:", requestsProcessed);
 	printf("%s %d\n", "Total direction changes:", directionChanges);
+	printf("%s %d\n", "Total time:", currentTime);
 }
 
 int main(int argc, const char * argv[]){
@@ -381,15 +426,86 @@ int main(int argc, const char * argv[]){
 		printf("%s\n", "Invalid head location");
 		return EXIT_FAILURE;
 	}
+	int queue[20],n,head,i,j,k,seek=0,max,diff,temp,queue1[20],queue2[20],temp1=0,temp2=0;
+	int numOfJobs = 0;
+	float avg;
+	int t = 0;
+	int times[20];
 	//the algorithm to use
 	algorithm = argv[1][0];
+	direction = argv[3][0];
 
+	/**
+	if(algorithm == 'C'){
+
+		while(scanf("%d %d", &temp, &times[t]) != EOF){
+
+			numOfJobs++;
+			t++;
+			//printf("%d\n", temp);
+
+			if(temp >= temp){
+
+				queue1[temp1] = temp;
+				temp1++;
+			}else{
+
+				queue2[temp2] = temp;
+				temp2++;
+			}
+		}
+		for(int i = 0; i < temp1 - 1; i++){
+
+			for(int j = i + 1; j < temp1; j++){
+
+				if(queue1[i] > queue1[j]){
+
+					temp = queue1[i];
+					queue1[i] = queue1[j];
+					queue1[j] = temp;
+				}
+			}
+		}
+		for(int i = 0; i < temp2 - 1; i++){
+
+			for(int j = i + 1; j < temp2; j++){
+
+				if(queue2[i] > queue2[j]){
+
+					temp = queue2[i];
+					queue2[i] = queue2[j];
+					queue2[j] = temp;
+				}
+
+			}
+		}
+        for(i=1, j=0;j<temp1;i++,j++)
+        queue[i] = queue1[j];
+        queue[i] = queue1[j];
+        queue[i] = 99999;
+        queue[i + 1] = 0;
+        for(i = temp1 + 3, j = 0; j < temp2; i++, j++)
+        queue[i] = queue2[j];
+    	queue[0] = currentHeadLocation;
+    	for(j = 0; j <= numOfJobs+ 1; j++){
+
+    		diff = abs(queue[j + 1] - queue[j]);
+    		seek += diff;
+    		printf("Disk head moves from %d to %d with seek %d\n",queue[j],queue[j+1],diff);
+    	}
+    	printf("Total seek time is %d\n", seek);
+    	avg = seek / (float)6;
+
+
+	}
+
+	*/
+	
 	if(algorithm != 'F' && algorithm != 'f' && algorithm != 'T' && algorithm != 't' && algorithm != 'C' && algorithm != 'c'){
 		return EXIT_FAILURE;
 		printf("%s\n", "Please provide algorithm as F, T, or C!!");
 	}
 	//which direction the disk is moving at start
-	direction = argv[3][0];
 
 	if(direction != 'a' && direction != 'd' && direction != 'A' && direction != 'D'){
 		printf("%s\n", "Please provide direction as A or D!");
@@ -398,4 +514,5 @@ int main(int argc, const char * argv[]){
 	buildRequestList();
 	handleInput();
 	output();
+	
 }
