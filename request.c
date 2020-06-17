@@ -352,11 +352,7 @@ void handleInput(){
 			}
 
 			currentTime = abs(distance / 15);
-
-			if(directionChange){
-				currentTime = currentTime + 3;
-			}
-			//printf("%d\n", abs(currentTime));
+			currentTime += calculateTimeToComplete(nextRequest, directionChange);
 			
 			requestsProcessed++;
 			currentHeadLocation = nextRequest -> location;
@@ -369,6 +365,8 @@ void handleInput(){
 			if(nextRequest -> arrivalTime > currentTime){
 				currentTime = nextRequest -> arrivalTime;
 			}
+			printf("%s %d\n", "Currently processing:",  nextRequest -> location);
+
 			currentTime += calculateTimeToComplete(nextRequest, directionChange);
 			requestsProcessed++;
 			currentHeadLocation = nextRequest -> location;
@@ -514,5 +512,7 @@ int main(int argc, const char * argv[]){
 	buildRequestList();
 	handleInput();
 	output();
-	
+	free(requestList);
+
+	return EXIT_SUCCESS;
 }
