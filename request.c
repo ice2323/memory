@@ -188,10 +188,10 @@ float calculateTimeToComplete(RequestNode* request, bool reverseDirection) {
     } else {
         distance = distanceFromHead(request);
     }
-
     distanceTravelled += distance;
     float timeToComplete = (float) distance / (float) 15;
     timeToComplete = reverseDirection ? timeToComplete + 3 : timeToComplete;
+    //printf("%s %f\n", "time to complete:", timeToComplete);
     float waitTime = currentTime - request->arrivalTime;
     totalLatency += timeToComplete + waitTime;
     return timeToComplete;
@@ -360,7 +360,18 @@ void handleInput(){
 			dequeue(nextRequest);
 		}else if(algorithm == 'T'){
 
-			bool directionChange = directionChanged(nextRequest);
+			if(!startCheck){
+
+				startCheck = true;
+				if(direction == 'A'){
+					changeDirectionForwards(nextRequest);
+				}
+				if(direction == 'D'){
+					changeDirectionBackwards(nextRequest);
+				}
+			}
+
+			directionChange = directionChanged(nextRequest);
 
 			if(nextRequest -> arrivalTime > currentTime){
 				currentTime = nextRequest -> arrivalTime;
@@ -368,7 +379,10 @@ void handleInput(){
 			printf("%s %d\n", "Currently processing:",  nextRequest -> location);
 
 			currentTime += calculateTimeToComplete(nextRequest, directionChange);
+						//	printf("%s %d\n", "Current time:", currentTime);
+
 			requestsProcessed++;
+			//printf("%s %d\n", "current head location:", currentHeadLocation);
 			currentHeadLocation = nextRequest -> location;
 			dequeue(nextRequest);
 			
