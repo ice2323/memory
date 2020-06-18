@@ -201,7 +201,7 @@ float calculateTimeToComplete(RequestNode* request, bool reverseDirection) {
 RequestNode * findNextCSCAN(){
 
 	if(currentTime == 0){
-
+		//important part
 		RequestNode * first = findFirstSSTF();
 		movingForwards = first -> location >= currentHeadLocation;
 		return first;
@@ -249,12 +249,7 @@ RequestNode* getNextRequest(){
 	}else if(algorithm == 'T'){
 		return findNextSSTF();
 	}else{
-		if(direction == 'A'){
-			return findNextCSCAN();
-
-		}else{
-			return findNextcscanNegative();
-		}
+		return findNextCSCAN();
 	}
 
 }
@@ -319,8 +314,6 @@ void handleInput(){
 
 		RequestNode* nextRequest = getNextRequest();
 		
-		//check if we need to change the direction
-
 		if(algorithm == 'F'){
 			
 			if(!startCheck){
@@ -334,20 +327,14 @@ void handleInput(){
 				}
 			}
 			directionChange = directionChanged(nextRequest);
-		
-			//distance = nextRequest -> location - currentHeadLocation;
-			//distanceTravelled += abs(distance);
+	
 			if(nextRequest -> arrivalTime > currentTime){
 
 				currentTime = nextRequest -> arrivalTime;
 			}
-
-			//currentTime = abs(distance / 15);
-			//currentTime += calculateTimeToComplete(nextRequest, directionChange);
-			currentTime = calculateTimeToComplete(nextRequest, directionChange);
+			currentTime += calculateTimeToComplete(nextRequest, directionChange);
 			requestsProcessed++;
 			currentHeadLocation = nextRequest -> location;
-			printf("%d\n", currentHeadLocation);
 			dequeue(nextRequest);
 		}else if(algorithm == 'T'){
 
@@ -367,20 +354,16 @@ void handleInput(){
 			if(nextRequest -> arrivalTime > currentTime){
 				currentTime = nextRequest -> arrivalTime;
 			}
-			printf("%s %d\n", "Currently processing:",  nextRequest -> location);
-
 			currentTime += calculateTimeToComplete(nextRequest, directionChange);
-						//	printf("%s %d\n", "Current time:", currentTime);
 
 			requestsProcessed++;
-			//printf("%s %d\n", "current head location:", currentHeadLocation);
 			currentHeadLocation = nextRequest -> location;
 			dequeue(nextRequest);
 			
 		}else if(algorithm == 'C'){
 
-			if(direction == 'A'){
-				bool directionChange = directionChanged(nextRequest);
+			if(true){
+				directionChange = directionChanged(nextRequest);
 
 				if(nextRequest -> arrivalTime > currentTime){
 					currentTime = nextRequest -> arrivalTime;
@@ -393,7 +376,6 @@ void handleInput(){
 				dequeue(nextRequest);
 			}else{
 				//cscan going downwards
-
 				bool directionChange = directionChanged(nextRequest);
 
 				if(nextRequest -> arrivalTime > currentTime){
