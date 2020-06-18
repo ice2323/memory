@@ -64,12 +64,14 @@ void enqueue(RequestNode *request){
 }
 
 void buildRequestList(){
+
 	initializeRequestList();
 
 	int sectorNum, arrivalTime;
 
 	while(scanf("%d %d", &sectorNum, &arrivalTime) > 1){
 
+		//check if the sector number is outside the range of the disk
 		if(sectorNum < 0 || sectorNum > 99999){
 
 			printf("%s\n", "Invalid head location!");
@@ -277,7 +279,8 @@ bool directionChanged(RequestNode* nextRequest){
 		return directionChange;
 	}
 }
-
+//these functions check if we need to change directions at the start
+//based on the initial direction the disk is spining
 bool changeDirectionForwards(RequestNode* nextRequest){
 
 	if(nextRequest -> location > currentHeadLocation){
@@ -298,18 +301,7 @@ bool changeDirectionBackwards(RequestNode* nextRequest){
 		return true;
 	}
 }
-void handleInputCSCAN(){
 
-	int currentMin = INT_MAX;
-
-	while(requestList -> size > 0){
-
-
-		
-		//currentHeadLocation = nextRequest -> location;
-	}
-
-}
 //time = distance/15 + (reverse_direction) ? 3 : 0;
 void handleInput(){
 
@@ -331,7 +323,6 @@ void handleInput(){
 
 		if(algorithm == 'F'){
 			
-
 			if(!startCheck){
 
 				startCheck = true;
@@ -344,16 +335,16 @@ void handleInput(){
 			}
 			directionChange = directionChanged(nextRequest);
 		
-			distance = nextRequest -> location - currentHeadLocation;
-			distanceTravelled += abs(distance);
+			//distance = nextRequest -> location - currentHeadLocation;
+			//distanceTravelled += abs(distance);
 			if(nextRequest -> arrivalTime > currentTime){
 
 				currentTime = nextRequest -> arrivalTime;
 			}
 
-			currentTime = abs(distance / 15);
-			currentTime += calculateTimeToComplete(nextRequest, directionChange);
-			
+			//currentTime = abs(distance / 15);
+			//currentTime += calculateTimeToComplete(nextRequest, directionChange);
+			currentTime = calculateTimeToComplete(nextRequest, directionChange);
 			requestsProcessed++;
 			currentHeadLocation = nextRequest -> location;
 			printf("%d\n", currentHeadLocation);
@@ -414,7 +405,6 @@ void handleInput(){
 				requestsProcessed++;
 				currentHeadLocation = nextRequest -> arrivalTime;
 				dequeue(nextRequest);
-
 			}		
 		}
 	}
@@ -456,7 +446,7 @@ int main(int argc, const char * argv[]){
 			t++;
 			//printf("%d\n", temp);
 
-			if(temp >= temp){
+			if(temp <= temp){
 
 				queue1[temp1] = temp;
 				temp1++;
@@ -470,7 +460,7 @@ int main(int argc, const char * argv[]){
 
 			for(int j = i + 1; j < temp1; j++){
 
-				if(queue1[i] > queue1[j]){
+				if(queue1[i] < queue1[j]){
 
 					temp = queue1[i];
 					queue1[i] = queue1[j];
@@ -482,7 +472,7 @@ int main(int argc, const char * argv[]){
 
 			for(int j = i + 1; j < temp2; j++){
 
-				if(queue2[i] > queue2[j]){
+				if(queue2[i] < queue2[j]){
 
 					temp = queue2[i];
 					queue2[i] = queue2[j];
@@ -510,8 +500,7 @@ int main(int argc, const char * argv[]){
 
 
 	}
-
-	*/
+*/
 	
 	if(algorithm != 'F' && algorithm != 'f' && algorithm != 'T' && algorithm != 't' && algorithm != 'C' && algorithm != 'c'){
 		return EXIT_FAILURE;
